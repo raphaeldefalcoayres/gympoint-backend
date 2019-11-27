@@ -23,7 +23,7 @@ class RegistrationController {
     }
 
     const registrationExists = await Registration.findOne({
-      where: { title: req.body.title },
+      where: { student_id: req.body.student_id },
     });
 
     if (registrationExists) {
