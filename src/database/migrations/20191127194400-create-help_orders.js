@@ -19,11 +19,11 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       answer: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.TEXT,
       },
       answer_at: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.DATE,
       },
       created_at: {

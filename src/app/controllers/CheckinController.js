@@ -12,7 +12,7 @@ class CheckinController {
     const date = new Date();
     const checkinExists = await Checkin.count({
       where: {
-        id: { [Op.gt]: req.params.id },
+        id: req.params.id,
         created_at: {
           [Op.between]: [startOfWeek(date), endOfWeek(date)],
         },

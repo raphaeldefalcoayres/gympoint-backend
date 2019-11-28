@@ -1,34 +1,45 @@
-import { startOfWeek, endOfWeek } from 'date-fns';
-import { Op } from 'sequelize';
+import * as Yup from 'yup';
 import HelpOrder from '../models/HelpOrder';
 
 class HelpOrderController {
   async index(req, res) {
-    const helpOrders = await HelpOrder.findAll();
+    const helpOrders = await HelpOrder.findAll({
+      where: { answer: null },
+    });
     return res.json(helpOrders);
   }
 
   async store(req, res) {
-    const date = new Date();
-    const helpOrderExists = await HelpOrder.count({
-      where: {
-        id: { [Op.gt]: req.params.id },
-        created_at: {
-          [Op.between]: [startOfWeek(date), endOfWeek(date)],
-        },
-      },
-    });
+    const helpOrderExists = await HelpOrder.findByPk(req.params.id);
 
-    if (helpOrderExists >= 5) {
-      return res
-        .status(400)
-        .json({ error: 'Check in is limited to 5 times a week.' });
+    if (!helpOrderExists) {
+      return res.status(400).json({ error: 'Help Order not exist.' });
     }
 
-    const { id, student_id } = await HelpOrder.create({
-      student_id: req.params.id,
+    const schema = Yup.object().shape({
+      answer: Yup.string().required(),
     });
-    return res.json({ id, student_id });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
+
+    const answer_at = new Date();
+
+    const { answer } = req.body;
+
+    const { id, student_id, question } = await HelpOrder.update(
+      {
+        answer,
+        answer_at,
+      },
+      {
+        where: {
+          id: req.params.id,
+        },
+      }
+    );
+    return res.json({ id, student_id, question, answer, answer_at });
   }
 }
 
