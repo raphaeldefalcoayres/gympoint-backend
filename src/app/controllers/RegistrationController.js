@@ -1,5 +1,8 @@
 import * as Yup from 'yup';
+import { addMonths } from 'date-fns';
 import Registration from '../models/Registration';
+import Plan from '../models/Plan';
+import Student from '../models/Student';
 
 class RegistrationController {
   async index(req, res) {
@@ -11,13 +14,24 @@ class RegistrationController {
     const schema = Yup.object().shape({
       student_id: Yup.number().required(),
       plan_id: Yup.number().required(),
-      start_date: Yup.date().required(),
-      end_date: Yup.date().required(),
-      price: Yup.number().required(),
     });
 
     if (!(await schema.isValid(req.body))) {
       return res.status(400).json({ error: 'Validation fails' });
+    }
+
+    const { student_id, plan_id } = req.body;
+
+    const studentExists = await Student.findByPk(student_id);
+
+    if (!studentExists) {
+      return res.status(400).json({ error: 'Student not exist.' });
+    }
+
+    const planExist = await Plan.findByPk(plan_id);
+
+    if (!planExist) {
+      return res.status(400).json({ error: 'Plan not exist.' });
     }
 
     const registrationExists = await Registration.findOne({
@@ -28,15 +42,29 @@ class RegistrationController {
       return res.status(400).json({ error: 'Registration already exists.' });
     }
 
-    const {
+    const { price, duration } = await Plan.findByPk(plan_id);
+
+    const registration_price = price * duration;
+
+    const start_date = new Date();
+    const end_date = addMonths(start_date, duration);
+
+    const { id } = await Registration.create({
+      student_id,
+      plan_id,
+      price: registration_price,
+      start_date,
+      end_date,
+    });
+
+    return res.json({
       id,
       student_id,
       plan_id,
-      price,
+      price: registration_price,
       start_date,
       end_date,
-    } = await Registration.create(req.body);
-    return res.json({ id, student_id, plan_id, price, start_date, end_date });
+    });
   }
 
   async update(req, res) {
