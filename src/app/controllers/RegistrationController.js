@@ -3,6 +3,7 @@ import { addMonths } from 'date-fns';
 import Registration from '../models/Registration';
 import Plan from '../models/Plan';
 import Student from '../models/Student';
+import Queue from '../lib/Queue';
 
 class RegistrationController {
   async index(req, res) {
@@ -28,9 +29,9 @@ class RegistrationController {
       return res.status(400).json({ error: 'Student not exist.' });
     }
 
-    const planExist = await Plan.findByPk(plan_id);
+    const planExists = await Plan.findByPk(plan_id);
 
-    if (!planExist) {
+    if (!planExists) {
       return res.status(400).json({ error: 'Plan not exist.' });
     }
 
@@ -55,6 +56,15 @@ class RegistrationController {
       price: registration_price,
       start_date,
       end_date,
+    });
+
+    await Queue.add({
+      registration: {
+        plan: planExists,
+        end_date,
+        price: registration_price,
+        student: studentExists,
+      },
     });
 
     return res.json({
