@@ -20,6 +20,8 @@ routes.use(authMidleware);
 
 routes.put('/users', UserController.update);
 
+routes.get('/users', StudentController.index);
+
 routes.post('/students', StudentController.store);
 routes.put('/students', StudentController.update);
 
